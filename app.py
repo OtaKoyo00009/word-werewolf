@@ -415,8 +415,12 @@ def on_start_game(data):
         pairs = [x for x in WORD_PAIRS if category == "ランダム" or x[0] == category]
         if not pairs:
             pairs = WORD_PAIRS
-        category_name, citizen_word, wolf_word, difficulty = random.choice(pairs)
+        category_name, word_a, word_b, difficulty = random.choice(pairs)
         players = list(room["players"].values())
+        citizen_word, wolf_word = random.choice([
+            (word_a, word_b),
+            (word_b, word_a)
+        ])
         wolf = random.choice(players)
         room["talk_seconds"] = seconds
         room["category"] = category
