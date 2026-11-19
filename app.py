@@ -454,8 +454,8 @@ def on_ready():
             room["phase"] = "DISCUSSION"
             room["message"] = "全員の準備が完了しました。トーク開始！"
             token = room["game_token"]
-            broadcast(room)
             schedule_timer(room, room["talk_seconds"], discussion_timeout)
+            broadcast(room)
         else:
             broadcast(room)
 
