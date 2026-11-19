@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WORD WEREWOLF</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" id="brandHome"><span class="brand-mark">W</span> WORD <b>WEREWOLF</b></a>
+      <div class="top-actions">
+        <span id="connection" class="connection"><i></i> 接続中</span>
+        <button class="ghost small" id="profileButton">戦績</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="homeScreen" class="screen active">
+        <div class="hero">
+          <div class="eyebrow">SOCIAL DEDUCTION PARTY GAME</div>
+          <h1>言葉に隠された<br><span>嘘を見抜け。</span></h1>
+          <p>同じお題を持つ市民に紛れ込んだ人狼を見つけ出そう。<br>3〜5人で遊べるオンラインワード人狼。</p>
+          <div class="home-actions">
+            <button class="primary large" id="createRoomButton">ルームを作成する <span>→</span></button>
+            <button class="secondary large" id="showJoinButton">ルームに参加する</button>
+          </div>
+          <div class="join-panel hidden" id="joinPanel">
+            <input id="joinCode" maxlength="5" placeholder="ルームコード（例：A7K92）" autocomplete="off">
+            <button class="primary" id="joinRoomButton">参加</button>
+          </div>
+          <div class="feature-row">
+            <div><strong>3–5</strong><span>PLAYERS</span></div>
+            <div><strong>01</strong><span>WEREWOLF</span></div>
+            <div><strong>∞</strong><span>ROUNDS</span></div>
+          </div>
+        </div>
+        <div class="side-card">
+          <div class="card-orbit orbit-one"></div><div class="card-orbit orbit-two"></div>
+          <div class="mystery-card">
+            <div class="card-top"><span>YOUR SECRET WORD</span><span class="dot-live"></span></div>
+            <div class="question-mark">?</div>
+            <div class="card-bottom"><span>TRUST NO ONE</span><span>WW / 001</span></div>
+          </div>
+          <div class="floating-tag tag-top">WHO IS THE WOLF?</div>
+          <div class="floating-tag tag-bottom">BLEND IN. SURVIVE.</div>
+        </div>
+      </section>
+
+      <section id="lobbyScreen" class="screen">
+        <div class="section-heading">
+          <div class="eyebrow">GAME LOBBY</div><h2>ルーム</h2><p>友達にルームコードを共有して参加してもらおう。</p>
+        </div>
+        <div class="lobby-grid">
+          <div class="panel room-panel">
+            <div class="panel-label">ROOM CODE</div>
+            <div class="room-code-line"><strong id="roomCode">-----</strong><button class="icon-button" id="copyCodeButton" title="コピー">▢</button></div>
+            <div class="player-count"><span id="playerCount">1</span> / 5 PLAYERS</div>
+            <div class="player-list" id="playerList"></div>
+            <button class="text-button" id="leaveRoomButton">ルームから退出</button>
+          </div>
+          <div class="panel settings-panel">
+            <div class="panel-label">GAME SETTINGS</div>
+            <label class="field-label" for="talkSeconds">トーク時間</label>
+            <div class="select-wrap"><select id="talkSeconds">
+              <option value="30">30秒</option><option value="60" selected>60秒</option>
+              <option value="90">90秒</option><option value="120">120秒</option>
+              <option value="180">180秒</option><option value="300">300秒</option>
+            </select></div>
+            <label class="field-label" for="category">お題カテゴリー</label>
+            <div class="select-wrap"><select id="category">
+              <option>ランダム</option><option>食べ物</option><option>動物</option>
+              <option>スポーツ</option><option>乗り物</option><option>日用品</option>
+              <option>ゲーム</option><option>場所</option><option>学校</option>
+              <option>職業</option><option>自然</option>
+            </select></div>
+            <div class="settings-note">人狼は毎ゲーム1人選ばれます。設定を変更できるのはホストのみです。</div>
+            <button class="primary full" id="startGameButton" disabled>ゲーム開始（3人以上）</button>
+            <p class="host-note" id="hostNote">ホストがゲームを開始できます。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="roleScreen" class="screen centered-screen">
+        <div class="eyebrow">YOUR SECRET ROLE</div><h2>あなたのお題</h2>
+        <p class="muted">この画面は自分だけで確認してください。</p>
+        <div id="roleCard" class="role-card">
+          <div class="role-symbol">?</div><div class="role-label">お題を配布しています...</div><div class="role-word">---</div>
+        </div>
+        <div class="role-tip" id="roleTip">お題を覚えたら準備完了を押してください。</div>
+        <button class="primary large" id="readyButton">確認した・準備完了</button>
+        <div class="ready-status" id="readyStatus">準備完了 0 / 0 人</div>
+      </section>
+
+      <section id="discussionScreen" class="screen centered-screen">
+        <div class="eyebrow">DISCUSSION TIME</div><h2>会話して人狼を探そう</h2>
+        <p class="muted">自分のお題を直接言わず、自然な会話で相手を見極めよう。</p>
+        <div class="timer-ring" id="timerRing"><div><strong id="timerValue">60</strong><span>SECONDS</span></div></div>
+        <div class="discussion-players" id="discussionPlayers"></div>
+        <div class="notice-box">トーク終了後、自動的に投票へ進みます。</div>
+      </section>
+
+      <section id="votingScreen" class="screen">
+        <div class="section-heading center">
+          <div class="eyebrow">VOTING</div><h2 id="votingTitle">人狼だと思う人に投票</h2>
+          <p id="votingDescription">投票は匿名です。投票後の変更はできません。</p>
+        </div>
+        <div class="vote-grid" id="voteGrid"></div>
+        <div class="vote-footer"><span id="voteProgress">0 / 0 人 投票済み</span><span id="voteRound">通常投票</span></div>
+      </section>
+
+      <section id="guessScreen" class="screen centered-screen">
+        <div class="eyebrow danger-text">FINAL CHANCE</div><h2>最後の逆転チャンス</h2>
+        <p class="muted">あなたは人狼です。市民のお題を推理して入力してください。</p>
+        <div class="guess-panel">
+          <label for="wolfGuessInput">市民のお題は何？</label>
+          <input id="wolfGuessInput" placeholder="お題を入力..." maxlength="30">
+          <button class="danger-button full" id="submitGuessButton">回答する</button>
+        </div>
+      </section>
+
+      <section id="resultScreen" class="screen">
+        <div class="result-hero" id="resultHero">
+          <div class="eyebrow">GAME RESULT</div><h2 id="resultTitle">市民側の勝利</h2><p id="resultReason"></p>
+        </div>
+        <div class="result-grid">
+          <div class="panel">
+            <div class="panel-label">ROLE REVEAL</div>
+            <div id="resultPlayers" class="result-players"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-label">VOTING HISTORY</div>
+            <div id="resultVotes" class="result-votes"></div>
+            <div class="word-reveal"><span>市民のお題</span><strong id="citizenWord">---</strong></div>
+            <div class="word-reveal"><span>人狼のお題</span><strong id="wolfWord">---</strong></div>
+          </div>
+        </div>
+        <div class="result-actions">
+          <button class="primary large" id="rematchButton">もう一度遊ぶ</button>
+          <button class="secondary large" id="backLobbyButton">ロビーに戻る</button>
+        </div>
+        <p class="host-note" id="rematchNote">再戦を開始できるのはホストです。</p>
+      </section>
+
+      <section id="statsScreen" class="screen">
+        <div class="section-heading"><div class="eyebrow">YOUR RECORD</div><h2>プレイ戦績</h2><p>このブラウザで使用しているゲストIDの戦績です。</p></div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="panel ranking-panel"><div class="panel-label">TOP PLAYERS</div><div id="rankingList"></div></div>
+        <button class="secondary" id="closeStatsButton">戻る</button>
+      </section>
+    </main>
+    <div class="toast" id="toast"></div>
+    <footer>WORD WEREWOLF <span>© 2026</span></footer>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
