@@ -7,6 +7,7 @@ import threading
 import time
 import os
 from pathlib import Path
+from word_pairs import WORD_PAIRS
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-this-secret-in-production")
@@ -15,33 +16,6 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 DB_PATH = Path(os.environ.get("DB_PATH", str(Path(__file__).with_name("word_werewolf.db"))))
 rooms = {}
 lock = threading.RLock()
-
-WORD_PAIRS = [
-    ("食べ物", "ラーメン", "うどん", "初級"),
-    ("食べ物", "カレー", "シチュー", "初級"),
-    ("食べ物", "寿司", "刺身", "初級"),
-    ("食べ物", "餃子", "焼売", "中級"),
-    ("食べ物", "たこ焼き", "お好み焼き", "中級"),
-    ("動物", "犬", "猫", "初級"),
-    ("動物", "ライオン", "トラ", "初級"),
-    ("動物", "イルカ", "クジラ", "中級"),
-    ("動物", "ワニ", "カメ", "中級"),
-    ("スポーツ", "サッカー", "フットサル", "中級"),
-    ("スポーツ", "野球", "ソフトボール", "中級"),
-    ("スポーツ", "テニス", "バドミントン", "中級"),
-    ("乗り物", "電車", "新幹線", "初級"),
-    ("乗り物", "飛行機", "ヘリコプター", "中級"),
-    ("日用品", "鉛筆", "シャープペンシル", "初級"),
-    ("日用品", "冷蔵庫", "冷凍庫", "中級"),
-    ("ゲーム", "マリオ", "ソニック", "中級"),
-    ("ゲーム", "ポケモン", "デジモン", "中級"),
-    ("場所", "遊園地", "テーマパーク", "中級"),
-    ("場所", "海", "プール", "初級"),
-    ("学校", "大学", "専門学校", "中級"),
-    ("職業", "医者", "看護師", "中級"),
-    ("自然", "台風", "竜巻", "上級"),
-    ("自然", "火山", "地震", "上級"),
-]
 
 def db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
