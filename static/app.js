@@ -114,13 +114,14 @@ socket.on("room_created", data => { roomCode = data.code; toast("ルームを作
 socket.on("joined_room", data => { roomCode = data.code; toast("ルームに参加しました。"); });
 socket.on("state", handleState);
 socket.on("private_role", data => {
-  myRole = data.role; myWord = data.word;
-  const wolf = myRole === "WOLF";
-  $("roleCard").className = `role-card ${wolf ? "wolf" : ""}`;
-  $("roleCard").innerHTML = `<div class="role-symbol">${wolf ? "♟" : "✦"}</div>
-    <div class="role-label">${wolf ? "WEREWOLF" : "CITIZEN"}</div>
+  myRole = data.role; 
+  myWord = data.word;
+
+  $("roleCard").className = "role-card";
+  $("roleCard").innerHTML = `<div class="role-symbol">✦</div>
+    <div class="role-label">YOUR WORD</div>
     <div class="role-word">${escapeHtml(data.word)}</div>`;
-  $("roleTip").textContent = wolf ? "市民のお題を推理しながら、正体を隠しましょう。" : "人狼にお題を悟られないように会話しましょう。";
+  $("roleTip").textContent = "お題を覚えて、会話の中でほかの人との違いを探しましょう。";
   $("readyButton").disabled = false;
 });
 socket.on("ready_count", data => $("readyStatus").textContent = `準備完了 ${data.ready} / ${data.total} 人`);
