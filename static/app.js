@@ -109,6 +109,9 @@ function handleState(state) {
 }
 socket.on("connect", () => setConnection(true));
 socket.on("disconnect", () => setConnection(false));
+socket.on("name_changed", data => {
+    toast(`名前を「${data.name}」に変更しました。`);
+});
 socket.on("error_message", data => toast(data.message || "エラーが発生しました。"));
 socket.on("room_created", data => { roomCode = data.code; toast("ルームを作成しました。"); });
 socket.on("joined_room", data => { roomCode = data.code; toast("ルームに参加しました。"); });
@@ -130,6 +133,26 @@ socket.on("personal_result", data => {
   toast(data.points_earned > 0 ? `勝利！ +${data.points_earned}ポイント` : "今回は敗北。次のゲームで勝とう！");
 });
 
+$("changeNameButton").addEventListener("click", () => {
+    const entered = prompt(
+        "新しい名前を入力してください（12文字以内）",
+        playerName || "ゲスト"
+    );
+
+    if (entered === null) return;
+
+    const newName = entered.trim().slice(0, 12);
+    if (!newName) return toast("名前を入力してください。");
+
+    playerName = newName;
+    localStorage.setItem("ww_player_name", playerName);
+
+    if (roomCode) {
+        socket.emit("change_name", {name: playerName});
+    } else {
+        toast(`名前を「${playerName}」に変更しました。`);
+    }
+});
 $("createRoomButton").addEventListener("click", () => socket.emit("create_room", identity()));
 $("showJoinButton").addEventListener("click", () => $("joinPanel").classList.toggle("hidden"));
 $("joinRoomButton").addEventListener("click", () => {

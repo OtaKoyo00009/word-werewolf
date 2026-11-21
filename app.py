@@ -357,6 +357,46 @@ def on_leave_room():
         else:
             broadcast(room)
 
+@socketio.on("change_name")
+def on_change_name(data):
+    data = data or {}
+    new_name = clean_name(data.get("name"))
+
+    with lock:
+        room, player = get_current_room_for_sid(request.sid)
+        if not room or not player:
+            return emit_error("ルームに参加していません。")
+
+        old_name = player["name"]
+        player["name"] = new_name
+
+        # 結果画面の名前も更新
+        result = room.get("result")
+        if result:
+            for result_player in result.get("players", []):
+                if result_player.get("player_id") == player["player_id"]:
+                    result_player["name"] = new_name
+
+            for vote in result.get("votes", []):
+                if vote.get("voter") == old_name:
+                    vote["voter"] = new_name
+                if vote.get("target") == old_name:
+                    vote["target"] = new_name
+
+            if result.get("wolf_id") == player["player_id"]:
+                result["wolf_name"] = new_name
+
+        # 戦績の表示名も更新
+        with db() as con:
+            con.execute(
+                "UPDATE stats SET display_name=? WHERE player_id=?",
+                (new_name, player["player_id"])
+            )
+            con.commit()
+
+        emit("name_changed", {"name": new_name})
+        broadcast(room)
+
 @socketio.on("disconnect")
 def on_disconnect():
     with lock:
